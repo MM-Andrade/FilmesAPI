@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using AutoMapper;
 using FilmesAPI.Data;
 using FilmesAPI.Data.DTOs;
 using FilmesAPI.Models;
@@ -13,15 +14,18 @@ namespace FilmesAPI.Controllers
     public class FilmeController : ControllerBase
     {
         private FilmeContext _context;
+        private IMapper _mapper;
 
-        public FilmeController(FilmeContext context)
+        public FilmeController(FilmeContext context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
 
         [HttpPost]
-        public IActionResult AdicionarFilme([FromBody] CreateFilmeDto filme)
+        public IActionResult AdicionarFilme([FromBody] CreateFilmeDto filmeDto)
         {
+            Filme filme = _mapper.Map<Filme>(filmeDto); 
 
             _context.Filmes.Add(filme);
             _context.SaveChanges();
@@ -40,6 +44,7 @@ namespace FilmesAPI.Controllers
         public IActionResult RecuperarFilmesPorId(int id)
         {
             Filme filme = _context.Filmes.FirstOrDefault(filme => filme.Id == id);
+            ReadFilmeDto readFilmeDto = _mapper.Map<ReadFilmeDto>(filme);
 
             if (filme != null)
             {
@@ -49,19 +54,15 @@ namespace FilmesAPI.Controllers
         }
 
         [HttpPut("{id}")]
-        public IActionResult AtualizaFilme(int id, [FromBody] Filme filmeAtualizado)
+        public IActionResult AtualizaFilme(int id, [FromBody] UpdateFilmeDto filmeDto)
         {
             Filme filme = _context.Filmes.FirstOrDefault(filme => filme.Id == id);
+
             if (filme == null)
             {
                 return NotFound();
             }
-
-            filme.Titulo = filmeAtualizado.Titulo;
-            filme.Genero = filmeAtualizado.Genero;
-            filme.Duracao = filmeAtualizado.Duracao;
-            filme.Diretor = filmeAtualizado.Diretor;
-
+            _mapper.Map(filmeDto, filme);
             _context.SaveChanges();
 
             return NoContent();
